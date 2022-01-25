@@ -4,7 +4,7 @@ close all ;
 clc ;
 
 %% Initialisation des paramètres
-fech=10E3;
+fech=4E3;
 
 Fse=4;
 Ts = 1e-3;
@@ -22,6 +22,36 @@ alpha=0.35;
 span=8;
 G=rcosdesign(alpha,span,Fse,'sqrt');  %filtre de mise en forme
 
+%Canal
+
+ n=-12:12;
+    ret=0;
+    d=1.5;
+   
+        
+    
+    h_temp=sinc(n-ret-d);
+    h=h_temp.*transpose(hann(length(h_temp)));
+    
+ %Recepteur
+ 
+  Ga = conv(G,h); %filtre adapté
+
+    Rg = conv2(G,h); %Autocorrélation entre le filtre G et le filtre simulant le canal
+    Rg2=conv2(Rg,Ga); %Autocorrélation entre les filtres G, Ga et le filtre adapaté Ga
+    
+    
+    retard = 0;
+    max = Rg2(1);
+    for i=2:length(Rg2)     %calcul du retard lié aux filtres
+        if (Rg2(i) > max)
+            retard = i;
+            max = Rg2(i);
+        end
+    end
+    
+    
+  
 Eg = 0; % Energie du filtre de mise en forme ->somme des modules au carré 
 for i=1:length(G)
     Eg = Eg + G(i)^2;
@@ -54,33 +84,17 @@ for j = 1: length(eb_n0)
 %% CANAL
 
 
-    n=0:23;
-    ret=12;
-    d=1;
+ 
     
-    h=sinc(n-ret-d);
     yl_temp=conv(h,Sl);
+    
     nl = sqrt(sigma2(j)/2) * (randn(size(yl_temp)) + 1i*randn (size (yl_temp))) ; %bruit blanc complexe
     yl = yl_temp + nl;
 
         
 %% RECEPTEUR
 
-    Ga = G; %filtre adapté
-
-    Rg = conv2(G,Ga); %Autocorrélation entre le filtre G et le filtre adapaté Ga
-    Rg2=conv(Rg,h); %Autocorrélation entre les filtre G, Ga et le filtre simulant le canal
-    
-    
-    retard = 0;
-    max = Rg2(1);
-    for i=2:length(Rg2)     %calcul du retard lié aux filtres
-        if (Rg2(i) > max)
-            retard = i;
-            max = Rg2(i);
-        end
-    end
-    
+   
     rl = conv2(Ga, yl);
     
     rln = rl(retard:Fse:length(rl)); %sous-echantillonnage
