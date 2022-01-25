@@ -51,21 +51,29 @@ for j = 1: length(eb_n0)
     
     Sl=conv2(G,Ss2); %dix échantillons = Ts en terme de temps   
 %% CANAL
-    alpha0 = 1;
-    nl = sqrt(sigma2(j)/2) * (randn(size(Sl)) + 1i*randn (size (Sl))) ; %bruit blanc complexe
-    yl = alpha0 * Sl + nl;
+
+    n=0:23;
+    ret=12;
+    d=1;
+    
+    h=sinc(n-ret-d);
+    yl_temp=conv(h,Sl);
+    nl = sqrt(sigma2(j)/2) * (randn(size(yl_temp)) + 1i*randn (size (yl_temp))) ; %bruit blanc complexe
+    yl = yl_temp + nl;
         
 %% RECEPTEUR
 
     Ga = G; %filtre adapté
     Rg = conv2(G,Ga); %Autocorrélation entre le filtre G et le filtre adapaté Ga
+    Rg2=conv(Rg,h);
+    
     
     retard = 0;
-    max = Rg(1);
-    for i=2:length(Rg)     %calcul du retard lié aux filtres
-        if (Rg(i) > max)
+    max = Rg2(1);
+    for i=2:length(Rg2)     %calcul du retard lié aux filtres
+        if (Rg2(i) > max)
             retard = i;
-            max = Rg(i);
+            max = Rg2(i);
         end
     end
     
