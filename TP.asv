@@ -19,7 +19,8 @@ Nfft=512;
 
 %filtre
 alpha=0.35;
-G=rcosdesign(alpha,8,Fse,'sqrt');  %filtre de mise en forme
+
+G=rcosdesign(alpha,8,4'sqrt');  %filtre de mise en forme
 
 Eg = 0; % Energie du filtre de mise en forme ->somme des modules au carré 
 for i=1:length(G)
@@ -40,6 +41,7 @@ for j = 1: length(eb_n0)
     bit_error = 0;
     bit_count = 0;
     while bit_error < 100
+
 %% Emetteur %%
 
     Sb=randi([0,3],1,Ns); %génère Ns échantillons aléatoires entre 0 et 3 (00,01,10,11)
