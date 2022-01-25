@@ -5,8 +5,8 @@ clc ;
 
 %% Initialisation des paramètres
 fech=10E3;
-Ds=1E3;
-Fse=fech/Ds;
+
+Fse=4;
 Ts = 1e-3;
 
 M=4;
@@ -19,7 +19,8 @@ Nfft=512;
 
 %filtre
 alpha=0.35;
-G=rcosdesign(alpha,8,Fse,'sqrt');  %filtre de mise en forme
+span=8;
+G=rcosdesign(alpha,span,Fse,'sqrt');  %filtre de mise en forme
 
 Eg = 0; % Energie du filtre de mise en forme ->somme des modules au carré 
 for i=1:length(G)
@@ -51,15 +52,21 @@ for j = 1: length(eb_n0)
     
     Sl=conv2(G,Ss2); %dix échantillons = Ts en terme de temps   
 %% CANAL
-    alpha0 = 1;
-    nl = sqrt(sigma2(j)/2) * (randn(size(Sl)) + 1i*randn (size (Sl))) ; %bruit blanc complexe
-    yl = alpha0 * Sl + nl;
+    n=0:23;
+    ret=12;
+    d=1;
+    h=sinc(n-ret-d);
+    
+    ylt = conv(h,Sl);
+    nl = sqrt(sigma2(j)/2) * (randn(size(ylt)) + 1i*randn (size (ylt))) ; %bruit blanc complexe
+    yl=ylt+nl;
         
 %% RECEPTEUR
 
     Ga = G; %filtre adapté
-    Rg = conv2(G,Ga); %Autocorrélation entre le filtre G et le filtre adapaté Ga
-    
+    Rg0=conv2(G,Ga);    %Autocorrélation entre le filtre G et le filtre adapté Ga
+    Rg = conv2(Rg0,h); %Autocorrélation entre le filtre G et le filtre du canal
+   
     retard = 0;
     max = Rg(1);
     for i=2:length(Rg)     %calcul du retard lié aux filtres
