@@ -31,12 +31,13 @@ G=rcosdesign(alpha,span,Fse,'sqrt');  %filtre de mise en forme
         
     
     h_temp=sinc(n-ret-d);
-    h=h_temp.*transpose(hann(length(h_temp)));
     
+    h=h_temp.*transpose(hann(length(h_temp)));
+    %h=1;
  %Recepteur
  
   Ga = conv(G,h); %filtre adapté
-
+    Ga=Ga(end:-1:1);
     Rg = conv2(G,h); %Autocorrélation entre le filtre G et le filtre simulant le canal
     Rg2=conv2(Rg,Ga); %Autocorrélation entre les filtres G, Ga et le filtre adapaté Ga
     
@@ -140,6 +141,10 @@ for j = 1: length(eb_n0)
     TEB(j) = bit_error/bit_count;
 end
 
+%%Egaliseur
+
+
+
 %% Affichage des résultats
 Te = 1/fech;
 t = linspace(0,10*Ts-Te, 100);
@@ -157,7 +162,7 @@ title("s_l(t) en bleu et r_l(t) en rouge");
 figure(4);
 semilogy(eb_n0_dB,TEB,'b');
 hold on
-semilogy(eb_n0_dB,Pb,'r');
+semilogy(eb_n0_dB-10*log10(max),Pb,'r');
 xlabel("E_b/N_0 en dB");
 ylabel("log(TEB)");
 title("évolution du TEB en fonction du SNR");
