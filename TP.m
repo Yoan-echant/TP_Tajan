@@ -26,13 +26,14 @@ G=rcosdesign(alpha,span,Fse,'sqrt');  %filtre de mise en forme
 
  n=-12:12;
     ret=0;
-    d=1.5;
+    d=-8;
    
         
     
     h_temp=sinc(n-ret-d);
     
     h=h_temp.*transpose(hann(length(h_temp)));
+    
     %h=1;
  %Recepteur
  
@@ -42,20 +43,26 @@ G=rcosdesign(alpha,span,Fse,'sqrt');  %filtre de mise en forme
     Rg2=conv2(Rg,Ga); %Autocorrélation entre les filtres G, Ga et le filtre adapaté Ga
     
     
-    retard = 0;
-    max = Rg2(1);
-    for i=2:length(Rg2)     %calcul du retard lié aux filtres
-        if (Rg2(i) > max)
-            retard = i;
-            max = Rg2(i);
-        end
-    end
+  %%Egaliseur par forcage a zéro
+V=Rg2;
+w=zeros(1,length(V));
+for i=1:length(V)
+    ed=zeros(1,length(V));
+    ed(i)=1;
     
-    
+    w(i)=(ed)*(V')/(V*(V'));
+end
+figure(5)
+plot(w,'b')
+[maxi,retard]=max(w);
+
+hold on;
+
+
   
 Eg = 0; % Energie du filtre de mise en forme ->somme des modules au carré 
-for i=1:length(G)
-    Eg = Eg + G(i)^2;
+for i=1:length(Rg)
+    Eg = Eg + Rg(i)^2;
 end
 
 sigA2 = 1; % Variance théorique des symboles -> calcul a partir de la formule avec E(X)²
@@ -67,6 +74,22 @@ sigma2 = sigA2 * Eg ./ ( n_b * eb_n0 ) ; % Variance du bruit complexe en bande d
 
 TEB = zeros ( size ( eb_n0 ) ); % Tableau des TEB (résultats)
 Pb = qfunc ( sqrt (2* eb_n0 ) ) ; % Tableau des probabilités d’erreurs théoriques = 0.5*erfc(sqrt(eb_n0))
+
+
+ %%Egaliseur MMSE
+V=Rg2;
+w=zeros(1,length(V));
+for i=1:length(V)
+    ed=zeros(1,length(V));
+    ed(i)=1;
+    B_V=V*(V');
+    Mat_temp=B_V+sigA2*eye(length(B_V));
+    w(i)=(ed)*(V')/Mat_temp;
+end
+
+plot(w,'r');
+[maxi,retard]=max(w);
+
 
 for j = 1: length(eb_n0)
     bit_error = 0;
@@ -85,7 +108,7 @@ for j = 1: length(eb_n0)
 %% CANAL
 
 
- 
+    
     
     yl_temp=conv(h,Sl);
     
@@ -141,8 +164,6 @@ for j = 1: length(eb_n0)
     TEB(j) = bit_error/bit_count;
 end
 
-%%Egaliseur
-
 
 
 %% Affichage des résultats
@@ -162,7 +183,7 @@ title("s_l(t) en bleu et r_l(t) en rouge");
 figure(4);
 semilogy(eb_n0_dB,TEB,'b');
 hold on
-semilogy(eb_n0_dB-10*log10(max),Pb,'r');
+semilogy(eb_n0_dB,Pb,'r');
 xlabel("E_b/N_0 en dB");
 ylabel("log(TEB)");
 title("évolution du TEB en fonction du SNR");
